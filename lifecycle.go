@@ -1,10 +1,11 @@
 package bubble
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
+  "time"
+  "fmt"
 )
 
 
@@ -18,19 +19,22 @@ const (
 
 // Start the bot
 func (b *Bot) Start() {
-  Log(Info, b.name, "Connecting to Discord")
+  // Load toys
+  b.loadToys()
 
   // Connect to Discord
-  err := b.connect()
-  if err != nil { Log(Error, b.name, "Error on connect event: " + err.Error()) }
+  b.connect()
 
+  // if connection was successful, ensure that the bot will
+  // stop by the end of this function, even if there's a panic()
 	defer b.Stop()
 
 	// Wait here until CTRL-C or other term signal is received.
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
-	Log(lifecycle, b.name, "Now running. Press Ctrl+C to stop")
+	Log(lifecycle, b.name, "Bot started successfully. Press Ctrl+C to stop")
 	<-stop
+  fmt.Println() // add a new line after the ^C thingy
 }
 
 
@@ -38,39 +42,39 @@ func (b *Bot) Start() {
 func (b *Bot) Stop() {
   Log(Info, b.name, "Shutting down")
 
-  err := b.close()
-  if err != nil { Log(Error, b.name, "Error on close event: " + err.Error()) }
+  for _, e := range b.toys { e.OnLifecycleEvent(Close) }
+
+  b.close()
 
 	Log(lifecycle, b.name, "Gracefully shut down")
 }
 
 
 // Open a websocket connection to Discord
-func (b *Bot) connect() error {
-	err := b.Session.Open()
-	if err != nil { return fmt.Errorf("Couldn't open session: %w", err) }
+func (b *Bot) connect() {
+  // keep trying to connect
+  for {
+    Log(Info, b.name, "Connecting to Discord")
+    err := b.Session.Open()
+    if err == nil { break }
 
-	for _, e := range b.toys {
-		err = e.OnLifecycleEvent(Connect)
-		if err != nil { return fmt.Errorf( LogStr(Error, e.ToyID(), err.Error()) )
-    }
-	}
+    Log(Error, b.name, "Couldn't open session: " + err.Error())
+    Log(Info, b.name, "Will attempt to reconnect in 10 seconds")
+    time.Sleep(10*time.Second)
+  }
 
-  return nil
+  Log(lifecycle, b.name, "Connected successfully")
+
+  // send connect event to toys
+	for _, t := range b.toys { t.OnLifecycleEvent(Connect) }
 }
 
 
 // Close the connection
-func (b *Bot) close() error {
-  defer b.Session.Close()
-
+func (b *Bot) close() {
   Log(Info, b.name, "Closing connection")
-
-  for _, e := range b.toys {
-		err := e.OnLifecycleEvent(Close)
-    if err != nil { return fmt.Errorf( LogStr(Error, e.ToyID(), err.Error()) )
-    }
-	}
-
-  return nil
+  err := b.Session.Close()
+  if err != nil {
+    Log(Error, b.name, "Failed to close connection: " + err.Error())
+  }
 }

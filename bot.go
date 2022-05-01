@@ -35,28 +35,34 @@ type Config struct {
 }
 
 
-func NewBot(conf Config) (*Bot, error) {
+func NewBot(conf Config) (b *Bot, err error) {
 	if conf.HideTimestamps { log.SetFlags(0) }
 
+	// create discordgo session
 	dg, err := discordgo.New( "Bot " + conf.Token )
 	if err != nil {
-		 return nil, fmt.Errorf("[discordgo.New] %w", err)
+		 err = fmt.Errorf("error creating discordgo instance: %w", err)
+		 return
 	}
 
 	// We only care about receiving message events.
 	dg.Identify.Intents = discordgo.IntentsGuildMessages
 
+	// default name is BubbleBot if none is provided
 	name := strings.TrimSpace(conf.Name)
 	if name == "" { name = "BubbleBot" }
 
-	b := &Bot{
+	// create Bot struct
+	b = &Bot{
 		name 				: name,
 		Session			: dg,
 		toysByID		: make(map[string]Toy),
 		msgManager  : newMsgManager(dg),
 	}
 
-	if err := b.loadToys(conf.Toys); err != nil { return nil, err }
+	// register toys
+	err = b.registerToys(conf.Toys)
+	if err != nil { err = fmt.Errorf("error registering toys: %w", err) }
 
-	return b, nil
+	return
 }

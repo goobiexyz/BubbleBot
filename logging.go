@@ -16,13 +16,7 @@ const (
 
 func Log(status LogStatus, id, details string) {
   msg := LogStr(status, id, details)
-
-  if status == Error {
-    log.Print(color.RedString("ERROR! Details below"))
-    panic(msg)
-  } else {
-    log.Print(msg)
-  }
+  log.Print(msg)
 }
 
 
