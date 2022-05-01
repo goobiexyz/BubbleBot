@@ -50,8 +50,6 @@ func (b *Bot) connect() error {
 	err := b.Session.Open()
 	if err != nil { return fmt.Errorf("Couldn't open session: %w", err) }
 
-  defer b.Session.Close()
-
 	for _, e := range b.toys {
 		err = e.OnLifecycleEvent(Connect)
 		if err != nil { return fmt.Errorf( LogStr(Error, e.ToyID(), err.Error()) )
