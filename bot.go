@@ -17,6 +17,8 @@ type Bot struct {
 	*msgManager
 }
 
+func (b *Bot) Name() string { return b.name }
+
 func (b *Bot) UserID() string { return b.Session.State.User.ID }
 
 func (b *Bot) Toys() []Toy { return b.toys }
