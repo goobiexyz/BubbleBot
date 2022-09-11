@@ -19,6 +19,7 @@ const (
 
 // Start the bot
 func (b *Bot) Start() {
+
   // Load toys
   b.loadToys()
 
@@ -64,6 +65,10 @@ func (b *Bot) connect() {
   }
 
   Log(lifecycle, b.name, "Connected successfully")
+
+	// Initialize the database
+	err := b.storage.InitDB(b.Session)
+	if err != nil { panic(err) }
 
   // send connect event to toys
 	for _, t := range b.toys { t.OnLifecycleEvent(Connect) }

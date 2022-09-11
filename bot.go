@@ -14,6 +14,7 @@ type Bot struct {
 	Session *discordgo.Session
 	toys []Toy
 	toysByID map[string]Toy
+	storage Storage
 	*msgManager
 }
 
@@ -48,7 +49,9 @@ func NewBot(conf Config) (b *Bot, err error) {
 	}
 
 	// We only care about receiving message events.
-	dg.Identify.Intents = discordgo.IntentsGuildMessages
+	dg.Identify.Intents += discordgo.IntentsGuildMessages
+	dg.Identify.Intents += discordgo.IntentsGuildMembers
+	dg.Identify.Intents += discordgo.IntentsGuildPresences
 
 	// default name is BubbleBot if none is provided
 	name := strings.TrimSpace(conf.Name)

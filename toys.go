@@ -2,6 +2,7 @@ package bubble
 
 import (
   "fmt"
+  _"log"
 )
 
 type Toy interface {
@@ -38,7 +39,22 @@ func (b *Bot) loadToys() {
 
 	for _, t := range b.toys {
     err := t.Load(b)
-    if err == nil { continue }
-		Log(Error, b.name, fmt.Sprintf("Failed to load %q toy: %w", t.ToyID(), err))
+
+    if err != nil {
+      Log(Error, b.name, fmt.Sprintf("Failed to load %q toy: %w", t.ToyID(), err))
+      continue
+    }
 	}
+}
+
+
+func (b *Bot) Option(toy Toy, guildID, name string) (interface{}, error) {
+  optionName := toy.ToyID() + "_" + name
+  return b.storage.Get(guildID, optionName)
+}
+
+
+func (b *Bot) SetOption(toy Toy, guildID, name string, val interface{}) error {
+  optionName := toy.ToyID() + "_" + name
+  return b.storage.Set(guildID, optionName, val)
 }
