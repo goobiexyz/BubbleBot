@@ -6,7 +6,7 @@ import (
 )
 
 type Toy interface {
-  Load(*Bot) error
+  Load(*Bot, *Storage) error
   OnLifecycleEvent(LifecycleEvent)
 
   ToyID() string
@@ -37,24 +37,15 @@ func (b *Bot) registerToys(toys []Toy) error {
 func (b *Bot) loadToys() {
   Log(Info, b.name, "Loading toys")
 
-	for _, t := range b.toys {
-    err := t.Load(b)
+  b.toyStores = make([]*Storage, len(b.toys))
+	for i, t := range b.toys {
+    s := &Storage{ name: t.ToyID() }
+    b.toyStores[i] = s
+    err := t.Load(b, s)
 
     if err != nil {
       Log(Error, b.name, fmt.Sprintf("Failed to load %q toy: %w", t.ToyID(), err))
       continue
     }
 	}
-}
-
-
-func (b *Bot) Option(toy Toy, guildID, name string) (interface{}, error) {
-  optionName := toy.ToyID() + "_" + name
-  return b.storage.Get(guildID, optionName)
-}
-
-
-func (b *Bot) SetOption(toy Toy, guildID, name string, val interface{}) error {
-  optionName := toy.ToyID() + "_" + name
-  return b.storage.Set(guildID, optionName, val)
 }

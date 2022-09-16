@@ -14,7 +14,7 @@ type Bot struct {
 	Session *discordgo.Session
 	toys []Toy
 	toysByID map[string]Toy
-	storage Storage
+	toyStores []*Storage
 	*msgManager
 }
 

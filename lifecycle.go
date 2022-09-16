@@ -66,9 +66,11 @@ func (b *Bot) connect() {
 
   Log(lifecycle, b.name, "Connected successfully")
 
-	// Initialize the database
-	err := b.storage.InitDB(b.Session)
-	if err != nil { panic(err) }
+	// Initialize the stores for the toys
+	for _, s := range b.toyStores {
+		err := s.initDB(b.Session)
+		if err != nil { panic(err) }
+	}
 
   // send connect event to toys
 	for _, t := range b.toys { t.OnLifecycleEvent(Connect) }
