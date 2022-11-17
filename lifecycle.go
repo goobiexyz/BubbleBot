@@ -6,9 +6,11 @@ import (
 	"syscall"
   "time"
   "fmt"
+	"log"
+	"github.com/bwmarrin/discordgo"
 )
 
-
+var _ = log.Print
 
 type LifecycleEvent int
 const (
@@ -43,6 +45,14 @@ func (b *Bot) Start() {
 func (b *Bot) Stop() {
   Log(Info, b.name, "Shutting down")
 
+	b.Session.UpdateStatusComplex(discordgo.UpdateStatusData{
+		Status : "idle",
+		Activities : []*discordgo.Activity{{
+			Name : "Shutting down...",
+			Type : discordgo.ActivityTypeGame,
+		}},
+	})
+
   for _, e := range b.toys { e.OnLifecycleEvent(Close) }
 
   b.close()
@@ -67,13 +77,27 @@ func (b *Bot) connect() {
   Log(lifecycle, b.name, "Connected successfully")
 
 	// Initialize the stores for the toys
-	for _, s := range b.toyStores {
-		err := s.initDB(b.Session)
-		if err != nil { panic(err) }
-	}
+	err := b.storage.initDB(b.Session)
+	if err != nil { panic(err) }
 
   // send connect event to toys
-	for _, t := range b.toys { t.OnLifecycleEvent(Connect) }
+	for _, t := range b.toys {
+		b.Session.UpdateStatusComplex(discordgo.UpdateStatusData{
+			Status : "idle",
+			Activities : []*discordgo.Activity{{
+				Name : "Setting up toys...",
+				Type : discordgo.ActivityTypeGame,
+			}},
+		})
+		t.OnLifecycleEvent(Connect)
+		b.Session.UpdateStatusComplex(discordgo.UpdateStatusData{
+			Status : "online",
+			Activities : []*discordgo.Activity{{
+				Name : b.onlineStatus,
+				Type : discordgo.ActivityTypeGame,
+			}},
+		})
+	}
 }
 
 

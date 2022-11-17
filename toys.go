@@ -2,11 +2,14 @@ package bubble
 
 import (
   "fmt"
-  _"log"
+  "log"
 )
 
+var _ = log.Print // for debugging
+
+
 type Toy interface {
-  Load(*Bot, *Storage) error
+  Load(*Bot, *StorageDriver) error
   OnLifecycleEvent(LifecycleEvent)
 
   ToyID() string
@@ -37,11 +40,8 @@ func (b *Bot) registerToys(toys []Toy) error {
 func (b *Bot) loadToys() {
   Log(Info, b.name, "Loading toys")
 
-  b.toyStores = make([]*Storage, len(b.toys))
-	for i, t := range b.toys {
-    s := &Storage{ name: t.ToyID() }
-    b.toyStores[i] = s
-    err := t.Load(b, s)
+	for _, t := range b.toys {
+    err := t.Load(b, &StorageDriver{ b.storage })
 
     if err != nil {
       Log(Error, b.name, fmt.Sprintf("Failed to load %q toy: %w", t.ToyID(), err))

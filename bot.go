@@ -8,13 +8,24 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+const (
+	CoreVersion = "0.3"
+
+	CoreName = "BubbleBot"
+	DefaultName = "BubbleBot"
+	FmtStatus = "%s v%s"
+)
+
 
 type Bot struct {
-	name string
 	Session *discordgo.Session
+
+	name string
+	version string
+	onlineStatus string
 	toys []Toy
 	toysByID map[string]Toy
-	toyStores []*Storage
+	storage *storage
 	*msgManager
 }
 
@@ -32,6 +43,7 @@ func (b *Bot) FindToy(id string) (Toy, bool) {
 
 type Config struct {
 	Name string
+	Version string
 	Token string
 	Toys []Toy
 	HideTimestamps bool
@@ -41,28 +53,42 @@ type Config struct {
 func NewBot(conf Config) (b *Bot, err error) {
 	if conf.HideTimestamps { log.SetFlags(0) }
 
+	// initialize Bot struct
+	b = &Bot{
+		toysByID		: make(map[string]Toy),
+		storage     : new(storage),
+	}
+
 	// create discordgo session
-	dg, err := discordgo.New( "Bot " + conf.Token )
+	session, err := discordgo.New( "Bot " + conf.Token )
 	if err != nil {
 		 err = fmt.Errorf("error creating discordgo instance: %w", err)
 		 return
 	}
+	b.Session = session
 
-	// We only care about receiving message events.
-	dg.Identify.Intents += discordgo.IntentsGuildMessages
-	dg.Identify.Intents += discordgo.IntentsGuildMembers
-	dg.Identify.Intents += discordgo.IntentsGuildPresences
+	// Set the discord api intents
+	b.Session.Identify.Intents += discordgo.IntentsGuildMessages
+	b.Session.Identify.Intents += discordgo.IntentsGuildMembers
+	b.Session.Identify.Intents += discordgo.IntentsGuildPresences
 
-	// default name is BubbleBot if none is provided
-	name := strings.TrimSpace(conf.Name)
-	if name == "" { name = "BubbleBot" }
+	// initialize message manager
+	b.msgManager = newMsgManager(b.Session)
 
-	// create Bot struct
-	b = &Bot{
-		name 				: name,
-		Session			: dg,
-		toysByID		: make(map[string]Toy),
-		msgManager  : newMsgManager(dg),
+	// set name, use default if none provided
+	if name := strings.TrimSpace(conf.Name); name != "" {
+		b.name = name
+	} else {
+		b.name = DefaultName
+	}
+
+	// set version
+	b.version = strings.TrimSpace(conf.Version)
+
+	// set the status that will show when bot is online
+	b.onlineStatus = fmt.Sprintf(FmtStatus, CoreName, CoreVersion)
+	if b.name != DefaultName && b.version != "" {
+		b.onlineStatus += " | " + fmt.Sprintf(FmtStatus, b.name, b.version)
 	}
 
 	// register toys
