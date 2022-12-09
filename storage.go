@@ -292,9 +292,9 @@ func (s *StorageDriver) Channel(id string) (Entry, error) {
 // returns a member Entry with the provided guild ID and user ID
 func (s *StorageDriver) Member(guildID, userID string) (Entry, error) {
   criteria := clover.Field(FieldUserID).Eq(userID).And(clover.Field(FieldGuildID).Eq(guildID))
-  query := s.db.Query(string(CollectionMessages)).Where(criteria)
+  query := s.db.Query(string(CollectionMembers)).Where(criteria)
   doc, err := query.FindFirst()
-  return Entry{ doc, CollectionMessages }, err
+  return Entry{ doc, CollectionMembers }, err
 }
 
 // returns an entry from the custom collection, using an optional filter
