@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	CoreVersion = "0.3"
+	CoreVersion = "0.3.1"
 
 	CoreName = "BubbleBot"
 	DefaultName = "BubbleBot"
