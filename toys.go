@@ -3,13 +3,15 @@ package bubble
 import (
   "fmt"
   "log"
+
+  "github.com/gracieart/bubblebot/storage"
 )
 
 var _ = log.Print // for debugging
 
 
 type Toy interface {
-  Load(*Bot, *StorageDriver) error
+  Load(*Bot, *storage.StorageDriver) error
   OnLifecycleEvent(LifecycleEvent)
 
   ToyID() string
@@ -41,7 +43,7 @@ func (b *Bot) loadToys() {
   Log(Info, b.name, "Loading toys")
 
 	for _, t := range b.toys {
-    err := t.Load(b, &StorageDriver{ b.storage })
+    err := t.Load(b, &storage.StorageDriver{ b.database })
 
     if err != nil {
       Log(Error, b.name, fmt.Sprintf("Failed to load %q toy: %w", t.ToyID(), err))

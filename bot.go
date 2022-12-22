@@ -6,6 +6,8 @@ import (
 	"log"
 
 	"github.com/bwmarrin/discordgo"
+
+	"github.com/gracieart/bubblebot/storage"
 )
 
 const (
@@ -25,7 +27,7 @@ type Bot struct {
 	onlineStatus string
 	toys []Toy
 	toysByID map[string]Toy
-	storage *storage
+	database *storage.Database
 	*msgManager
 }
 
@@ -56,7 +58,7 @@ func NewBot(conf Config) (b *Bot, err error) {
 	// initialize Bot struct
 	b = &Bot{
 		toysByID		: make(map[string]Toy),
-		storage     : new(storage),
+		database     : new(storage.Database),
 	}
 
 	// create discordgo session

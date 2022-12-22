@@ -76,8 +76,8 @@ func (b *Bot) connect() {
 
   Log(lifecycle, b.name, "Connected successfully")
 
-	// Initialize the stores for the toys
-	err := b.storage.initDB(b.Session)
+	// Open the local database
+	err := b.database.Open(b.Session.State.Ready.Guilds)
 	if err != nil { panic(err) }
 
   // send connect event to toys
